@@ -10,8 +10,10 @@ namespace DapperUserCRUD.DataAccess.Repository.Interface
 
         Task<User> GetByIdAsync(Guid id);
 
-        Task<List<User>> GetUsersAsync();
+        Task<IEnumerable<User>> GetUsersAsync();
 
         Task UpdateAsync(User user);
+
+        Task<User> GetByLoginAsync(string login);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using DapperUserCRUD.DataAccess.Repository.Interface;
+using DapperUserCRUD.Objects.Constants;
 using DapperUserCRUD.Objects.Dto;
 using DapperUserCRUD.Objects.Entity;
 using DapperUserCRUD.Objects.Enum;
@@ -23,14 +24,14 @@ namespace DapperUserCRUD.Service.Implementation
 
         public async Task<BaseResult<UserDto>> AddUserAsync(CreateUserDto dto)
         {
-            var user = (await _userRepository.GetUsersAsync()).FirstOrDefault(x => x.Login == dto.Login);
+            var user = await _userRepository.GetByLoginAsync(dto.Login);
 
             if (user != null)
             {
                 return new BaseResult<UserDto>()
                 {
                     ErrorCode = (int)StatusCode.UserAlreadyExist,
-                    ErrorMessage = "User already exists"
+                    ErrorMessage = ErrorMessages.UserAlreadyExists
                 };
             }
             user = new User()
@@ -52,14 +53,14 @@ namespace DapperUserCRUD.Service.Implementation
 
         public async Task<BaseResult<UserDto>> DeleteUserAsync(Guid id)
         {
-            var user = (await _userRepository.GetUsersAsync()).FirstOrDefault(x => x.Id == id);
+            var user = await _userRepository.GetByIdAsync(id);
 
             if (user == null)
             {
                 return new BaseResult<UserDto>()
                 {
                     ErrorCode = (int)StatusCode.UserNotFound,
-                    ErrorMessage = "User not found"
+                    ErrorMessage = ErrorMessages.UserNotFound
                 };
             }
 
@@ -73,14 +74,14 @@ namespace DapperUserCRUD.Service.Implementation
 
         public async Task<BaseResult<UserDto>> GetUserAsync(Guid id)
         {
-            var user = (await _userRepository.GetUsersAsync()).FirstOrDefault(x => x.Id == id);
+            var user = await _userRepository.GetByIdAsync(id);
 
             if (user == null)
             {
                 return new BaseResult<UserDto>()
                 {
                     ErrorCode = (int)StatusCode.UserNotFound,
-                    ErrorMessage = "User not found"
+                    ErrorMessage = ErrorMessages.UserNotFound
                 };
             }
 
@@ -92,46 +93,46 @@ namespace DapperUserCRUD.Service.Implementation
 
         public async Task<CollectionResult<UserDto>> GetUsersAsync()
         {
-            var users = (await _userRepository.GetUsersAsync())
-                .Select(x => new UserDto() { Id = x.Id, Age = x.Age, Login = x.Login, Email = x.Email})
-                .ToArray();
+            var users = await _userRepository.GetUsersAsync();
 
-            if (users == null)
+            if (!users.Any())
             {
                 return new CollectionResult<UserDto>()
                 {
                     ErrorCode = (int)StatusCode.UsersNotFound,
-                    ErrorMessage = "Users not found"
+                    ErrorMessage = ErrorMessages.UsersNotFound
                 };
             }
 
+            var usersDtos = users.Select(x => x.Adapt<UserDto>()).ToArray();
+
             return new CollectionResult<UserDto>
             {
-                Data = users,
-                Count = users.Length
+                Data = usersDtos,
+                Count = usersDtos.Length
             };
         }
 
         public async Task<BaseResult<UserDto>> UpdateUserDataAsync(UpdateUserDto dto)
         {
-            var user = (await _userRepository.GetUsersAsync()).FirstOrDefault(x => x.Login == dto.Login);
+            var user = await _userRepository.GetByLoginAsync(dto.Login);
 
             if (user != null)
             {
                 return new BaseResult<UserDto>()
                 {
-                    ErrorMessage = "User already exist with this data",
+                    ErrorMessage = ErrorMessages.UserAlreadyExistWithThisData,
                     ErrorCode = (int)StatusCode.UserAlreadyExist
                 };
             }
 
-            user = (await _userRepository.GetUsersAsync()).FirstOrDefault(x => x.Id == dto.Id);
+            user = await _userRepository.GetByIdAsync(dto.Id);
 
             if (user == null)
             {
                 return new BaseResult<UserDto>()
                 {
-                    ErrorMessage = "User is not found",
+                    ErrorMessage = ErrorMessages.UserNotFound,
                     ErrorCode = (int)StatusCode.UserNotFound
                 };
             }
